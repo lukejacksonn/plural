@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Pipper</title>
+    <script src="https://unpkg.com/hyperapp"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+
+    <style>
+
+      video-.focus {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+      video-.focus iframe {
+        width: 100%;
+        height: 100%;
+      }
+
+      video-:not(.focus) {
+        position: fixed;
+        z-index: 1;
+        top: 20rem;
+        left: 2rem;
+        width: 320px;
+        overflow: hidden;
+      }
+      video-:not(.focus)::before {
+        content: '';
+        display: block;
+        width: 100%;
+        padding-top: 50%;
+      }
+      video-:not(.focus)::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+      video-:not(.focus) iframe {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100%;
+        height: 150%;
+        transform: translate(-50%,-50%);
+      }
+
+    </style>
+  </head>
+  <body></body>
+  <script>
+
+    const { h, app } = hyperapp
+    const defer = fn => setTimeout(fn, 0)
+
+    const mutable = function (e) {
+
+      // Elements initial width and height
+      const h = this.offsetHeight;
+      const w = this.offsetWidth;
+      // Elements original position
+      const t = this.offsetTop;
+      const l = this.offsetLeft;
+      // Click position within element
+      const y = t + h - e.pageY;
+      const x = l + w - e.pageX;
+
+      const hasMoved = () =>
+        !(t === this.offsetTop && l === this.offsetLeft);
+
+      const follow = (e) => {
+        // Set top/left of element according to mouse position
+        this.style.top = `${e.pageY + y - h}px`;
+        this.style.left = `${e.pageX + x - w}px`;
+      }
+
+      const unfollow = (e) => {
+        // Remove listeners that were bound to document
+        document.removeEventListener('mousemove', follow);
+        document.removeEventListener("mouseup", unfollow);
+        // Emit events according to interaction
+        if (hasMoved(e)) this.dispatchEvent(new Event('moved'));
+        else this.dispatchEvent(new Event('clicked'));
+        e.preventDefault();
+      }
+
+      // Add follow listener if not resizing
+      document.addEventListener("mousemove", follow);
+      document.addEventListener("mouseup", unfollow);
+      e.preventDefault();
+    }
+
+    const toggleFocus = e => {
+      const $elem = document.querySelector('video-.focus')
+      // Prepare focussed element for window
+      $elem.style.top = e.target.style.top;
+      $elem.style.left = e.target.style.left;
+      $elem.classList.toggle('focus')
+      // Prepare windowed item for focus
+      e.target.style = '';
+      e.target.classList.toggle('focus')
+    }
+
+    const Video = s => a => vid => h('video-', {
+      class: vid.focus ? 'focus' : '',
+      onmousedown: mutable,
+      oncreate: e => e.addEventListener('clicked', toggleFocus),
+    }, h('iframe-', {
+      id: 'v--' + vid.id,
+      // onupdate: e => {
+      //   console.log(e);
+      //   if(s.playerState === 1) e.playVideo()
+      //   else if(s.playerState === 2) e.pauseVideo()
+      // },
+      oncreate: e => defer(_ =>
+      new YT.Player(e.id, {
+        playerVars: {
+          rel: 0,
+          html5: 1,
+          playsinline: 1,
+        },
+        events: {
+          onReady: e => {
+            e.target.loadVideoById(vid.id, 100)
+            vid.focus ? null : e.target.mute()
+          },
+          onStateChange: e => a.setPlayerState(e.data),
+        },
+      }))
+    }))
+
+    function onYouTubeIframeAPIReady() {
+      app({
+        state: {
+          playerState: -1,
+          vids: [
+            { id: 'k40HGu_x0bg', focus: true },
+            { id: '1RmJjrxCaCs' },
+          ]
+        },
+        actions: {
+          setPlayerState: (s,a,d) => ({ playerState: d })
+        },
+        events: {
+          update: (s,a,d) => console.log(d)
+        },
+        view: (s,a) => h('main', null, s.vids.map(Video(s)(a)))
+      })
+    }
+
+  </script>
+</html>

@@ -27,7 +27,13 @@
         left: 2rem;
         width: 320px;
         overflow: hidden;
+        transition: transform .2s;
+        cursor: move;
       }
+      video-:not(.focus):hover {
+        transform: scale(1.05);
+      }
+
       video-:not(.focus)::before {
         content: '';
         display: block;
@@ -56,7 +62,7 @@
   <body></body>
   <script>
 
-    const { h, app } = hyperapp
+    const { h, app, Router } = hyperapp
     const defer = fn => setTimeout(fn, 0)
 
     const mutable = function (e) {
@@ -107,50 +113,92 @@
       e.target.classList.toggle('focus')
     }
 
-    const Video = s => a => vid => h('video-', {
-      class: vid.focus ? 'focus' : '',
-      onmousedown: mutable,
-      oncreate: e => e.addEventListener('clicked', toggleFocus),
-    }, h('iframe-', {
-      id: 'v--' + vid.id,
-      // onupdate: e => {
-      //   console.log(e);
-      //   if(s.playerState === 1) e.playVideo()
-      //   else if(s.playerState === 2) e.pauseVideo()
-      // },
-      oncreate: e => defer(_ =>
-      new YT.Player(e.id, {
-        playerVars: {
-          rel: 0,
-          html5: 1,
-          playsinline: 1,
-        },
-        events: {
-          onReady: e => {
-            e.target.loadVideoById(vid.id, 100)
-            vid.focus ? null : e.target.mute()
-          },
-          onStateChange: e => a.setPlayerState(e.data),
-        },
-      }))
-    }))
+    const Link = a => (url, text) =>
+      h('a', {
+        onclick: e => e.preventDefault() || a.router.go(url),
+      }, text)
+
+
+    const Video = s => a => (vid,index) =>
+      h('video-', {
+        class: index === 0 ? 'focus' : '',
+        oncreate: e => e.addEventListener('clicked', toggleFocus),
+        onmousedown: mutable,
+      }, iframe(s)(a)(vid, index))
+
+    const playerVars = {
+      showinfo: 0,
+      rel: 0,
+      html5: 1,
+      playsinline: 1,
+    }
+
+    const iframe = s => a => (vid,index) =>
+      h('iframe-', {
+        id: 'v--' + vid.id,
+        oncreate: e => defer(_ =>
+          a.assignPlayer({
+            id: vid.id,
+            player: new YT.Player(e.id, {
+              playerVars,
+              events: {
+                onReady: e => {
+                  e.target.loadVideoById(vid.id, 0.1)
+                  index === 0 ? null : e.target.mute()
+                },
+                onStateChange: e => a.setPlayState({
+                  playState: e.data,
+                  currentTime: e.target.getCurrentTime(),
+                }),
+              },
+            })
+          })
+        )
+      })
 
     function onYouTubeIframeAPIReady() {
       app({
         state: {
-          playerState: -1,
-          vids: [
-            { id: 'k40HGu_x0bg', focus: true },
-            { id: '1RmJjrxCaCs' },
-          ]
+          playState: -1,
+          currentTime: 0,
+          videos: []
         },
         actions: {
-          setPlayerState: (s,a,d) => ({ playerState: d })
+          setVideos: (s,a,d) => ({ videos: d }),
+          setPlayState: (s,a, { playState, currentTime }) => ({ playState, currentTime }),
+          pausePlayers: s => s.videos.forEach(vid => vid.player ? vid.player.pauseVideo() : null),
+          playPlayers: s => s.videos.forEach(vid => vid.player ? vid.player.playVideo() : null),
+          syncPlayers: (s,a,d) => s.videos.forEach(vid => vid.player && vid.player.seekTo ? vid.player.seekTo(d) : null),
+          assignPlayer: (s,a,d) => {
+            const vid = s.videos.find(x => x.id === d.id)
+            return ({ videos: s.videos
+              .filter(x => x.id !== d.id)
+              .concat(Object.assign({}, vid, {
+                player: d.player
+              }))
+            })
+          },
         },
         events: {
-          update: (s,a,d) => console.log(d)
+          route: (s,a,d) => d.match !== '/:a/:b' ? null :
+            a.setVideos([
+              { id: d.params.a },
+              { id: d.params.b },
+            ]),
+          update: (s,a,d) => {
+            if (d.playState === 1) a.playPlayers()
+            if (d.playState === 2) a.pausePlayers()
+            if (d.playState === 3) a.syncPlayers(d.currentTime)
+          }
         },
-        view: (s,a) => h('main', null, s.vids.map(Video(s)(a)))
+        view: {
+          '/:a/:b': (s,a) => h('main', null, s.videos.map(Video(s)(a))),
+          '*': (s,a) => h('main', null, [
+            Link(a)('/k40HGu_x0bg/1RmJjrxCaCs','CS50 - Lecture 0'),
+            Link(a)('/z-Pt84VIirc/1-cxZluIIQo','CS50 - Lecture 1'),
+          ]),
+        },
+        plugins: [Router],
       })
     }
 

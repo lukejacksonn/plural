@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Pipper</title>
+    <title>Plural Video</title>
     <script src="https://unpkg.com/hyperapp"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
     <link rel="stylesheet" href="/index.css">
@@ -206,7 +206,7 @@
         view: {
           '/:a/:b': (s,a) => h('watch-', null, s.videos.map(Video(s)(a))),
           '/create': (s,a) => h('create-', null, CreatePair(s)(a)),
-          '/': (s,a) => h('main', null, [
+          '/': (s,a) => h('home-', null, [
             h('nav', null, [
               h('h1', null, 'plural.video'),
               h('button', {
@@ -214,12 +214,12 @@
               }, 'CREATE'),
             ]),
             h('header', null, [
-              h('p', null, 'picture-in-picture interface increasing multi context engagement'),
+              h('p', null, 'picture-in-picture interface for videos with concurrent perspectives'),
             ]),
             Grid({
               gutter: '2rem',
               padding: '3rem',
-              itemFlex: '20rem',
+              itemFlex: '15rem',
               children: [
                 Pair(a)('/k40HGu_x0bg/1RmJjrxCaCs','CS50 Lecture 0 - Fall 2016'),
                 Pair(a)('/z-Pt84VIirc/1-cxZluIIQo','CS50 Lecture 1 - Fall 2016'),
@@ -227,26 +227,11 @@
                 Pair(a)('/grfy2hFezD0/Ic54nP8CjHo','CS50 Lecture 3 - Fall 2016'),
               ]
             }),
-            h('footer'),
           ]),
         },
         plugins: [Router],
       })
     }
-    //
-    // h('svg', {
-    //   fill: "#000000",
-    //   viewBox: "0 0 24 24",
-    //   xmlns: "http://www.w3.org/2000/svg",
-    // }, [
-    //   h('path', {
-    //     d: "M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 1.98 2 1.98h18c1.1 0 2-.88 2-1.98V5c0-1.1-.9-2-2-2zm0 16.01H3V4.98h18v14.03z",
-    //   }),
-    //   h('path', {
-    //     d: "M0 0h24v24H0z",
-    //     fill: "none",
-    //   }),
-    // ]),
 
   </script>
 </html>

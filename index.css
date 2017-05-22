@@ -45,6 +45,7 @@ nav button {
   outline: none;
   color: #424242;
   font-size: .75rem;
+  border-radius: .25rem;
 }
 
 nav button:hover {
@@ -62,7 +63,7 @@ header {
 }
 
 header * {
-  margin-top: 1rem;
+  margin-top: 1.5rem;
 }
 
 header::before {
@@ -121,9 +122,9 @@ video-:not(.focus) {
   right: 5%;
   width: 320px;
   overflow: hidden;
-  transition: transform .3s;
+  transition: transform .3s ease-out;
   cursor: move;
-  border: 2px solid #111;
+  border: 2px solid #212121;
 }
 
 video-:not(.focus):hover {
@@ -174,11 +175,11 @@ pair-:hover title-:not(:empty) {
 }
 
 pair-:hover thumb-:first-of-type {
-  transform: scale(1.05);
+  transform: scale(1.025);
 }
 
 pair-:hover thumb-:last-of-type {
-  transform: translateY(10%);
+  transform: translateY(5%);
 }
 
 pair- thumb-:last-of-type {
@@ -218,7 +219,14 @@ thumb- input {
   background: transparent;
   border: 0;
   outline: 0;
-  color: #6f6f6f;
+}
+
+thumb- input::placeholder {
+  color: #212121;
+}
+
+thumb- input:hover::placeholder {
+  color: #424242;
 }
 
 thumb-::after {
@@ -227,17 +235,6 @@ thumb-::after {
   width: 100%;
   padding-top: 50%;
   box-shadow: 0 1px 5px 1px rgba(0,0,0,0.2);
-}
-
-footer {
-  height: 10vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: #121212;
-  border-top: 2px solid #212121;
-  margin: 0 3rem;
 }
 
 create- {

@@ -98,10 +98,6 @@ header p {
   text-align: center;
 }
 
-watch-:not(:hover) video-:last-of-type {
-  transform: translateY(100vh);
-}
-
 video-.focus {
   position: fixed;
   top: 0;

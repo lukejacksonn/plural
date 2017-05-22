@@ -1,6 +1,13 @@
 const { h, app, Router } = hyperapp
 const defer = fn => setTimeout(fn, 0)
 
+// Check to see if github redirect has occured
+const redirect = sessionStorage.redirect;
+delete sessionStorage.redirect;
+if (redirect && redirect != location.href) {
+  history.replaceState(null, null, redirect);
+}
+
 const mutable = function (e) {
   // Elements initial width and height
   const h = this.offsetHeight;

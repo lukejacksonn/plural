@@ -5,59 +5,7 @@
     <title>Pipper</title>
     <script src="https://unpkg.com/hyperapp"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
-
-    <style>
-
-      video-.focus {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-      }
-      video-.focus iframe {
-        width: 100%;
-        height: 100%;
-      }
-
-      video-:not(.focus) {
-        position: fixed;
-        z-index: 1;
-        top: 20rem;
-        left: 2rem;
-        width: 320px;
-        overflow: hidden;
-        transition: transform .2s;
-        cursor: move;
-      }
-      video-:not(.focus):hover {
-        transform: scale(1.05);
-      }
-
-      video-:not(.focus)::before {
-        content: '';
-        display: block;
-        width: 100%;
-        padding-top: 50%;
-      }
-      video-:not(.focus)::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-      }
-      video-:not(.focus) iframe {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 100%;
-        height: 150%;
-        transform: translate(-50%,-50%);
-      }
-
-    </style>
+    <link rel="stylesheet" href="/index.css">
   </head>
   <body></body>
   <script>
@@ -102,6 +50,23 @@
       e.preventDefault();
     }
 
+    const Grid = ({ children, gutter, padding, itemFlex }) =>
+      h('grid-', { style: {
+        display: 'flex',
+        flexFlow: 'row wrap',
+        paddingTop: padding,
+        paddingLeft: padding,
+        paddingBottom: padding > gutter ? `calc(${padding} - ${gutter})` : '',
+        paddingRight: padding > gutter ? `calc(${padding} - ${gutter})` : '',
+        marginBottom: padding < gutter ? `calc(${padding} - ${gutter})` : '',
+        marginRight: padding < gutter ? `calc(${padding} - ${gutter})` : '',
+      }}, children.map(
+        x => h('item-', { style: {
+          margin: `0 ${gutter} ${gutter} 0`,
+          flex: itemFlex,
+        }}, x)
+      ))
+
     const toggleFocus = e => {
       const $elem = document.querySelector('video-.focus')
       // Prepare focussed element for window
@@ -113,11 +78,50 @@
       e.target.classList.toggle('focus')
     }
 
-    const Link = a => (url, text) =>
-      h('a', {
-        onclick: e => e.preventDefault() || a.router.go(url),
-      }, text)
+    const CreateYoutubeThumb = a => (id, index) =>
+      h('thumb-', {
+        style: (id && id.length > 10)
+          ? { backgroundImage: `url(https://img.youtube.com/vi/${ id }/hqdefault.jpg)` }
+          : { border: '.2rem solid #212121' }
+      }, [
+        h('div', {}, h('input', {
+          placeholder: 'PASTE YOUTUBE URL',
+          style: (id && id.length > 10) ? { display: 'none' } : {},
+          oninput: e => index === 0
+            ? a.create.setPrimary(e.target.value.replace('https://www.youtube.com/watch?v=',''))
+            : a.create.setSecondary(e.target.value.replace('https://www.youtube.com/watch?v=',''))
+        })),
+      ])
 
+    const CreatePair = s => a =>
+      h('pair-', {
+        onclick: e => (s.create.primary && s.create.secondary)
+          ? a.router.go(`/${s.create.primary}/${s.create.secondary}`)
+          : null
+      }, [
+        h('title-', null, s.create.primary && s.create.secondary
+          ? `plural.video/${s.create.primary}/${s.create.secondary}`
+          : ''
+        ),
+        CreateYoutubeThumb(a)(s.create.primary, 0),
+        CreateYoutubeThumb(a)(s.create.secondary, 1),
+      ]
+    )
+
+    const YoutubeThumb = id =>
+      h('thumb-', {
+        style: { backgroundImage: `url(https://img.youtube.com/vi/${ id }/hqdefault.jpg)` },
+      })
+
+    const Pair = a => (url, text) =>
+      h('pair-', {
+        onclick: e => e.preventDefault() || a.router.go(url),
+      }, [
+        h('title-', null, text),
+        YoutubeThumb(url.split('/')[1]),
+        YoutubeThumb(url.split('/')[2]),
+      ]
+    )
 
     const Video = s => a => (vid,index) =>
       h('video-', {
@@ -143,7 +147,7 @@
               playerVars,
               events: {
                 onReady: e => {
-                  e.target.loadVideoById(vid.id, 0.1)
+                  e.target.loadVideoById(vid.id, 0.01)
                   index === 0 ? null : e.target.mute()
                 },
                 onStateChange: e => a.setPlayState({
@@ -161,9 +165,17 @@
         state: {
           playState: -1,
           currentTime: 0,
-          videos: []
+          videos: [],
+          create: {
+            primary: null,
+            secondary: null,
+          }
         },
         actions: {
+          create: {
+            setPrimary: (s,a,d) => ({ create: Object.assign({}, s.create, { primary: d }) }),
+            setSecondary: (s,a,d) => ({ create: Object.assign({}, s.create, { secondary: d }) }),
+          },
           setVideos: (s,a,d) => ({ videos: d }),
           setPlayState: (s,a, { playState, currentTime }) => ({ playState, currentTime }),
           pausePlayers: s => s.videos.forEach(vid => vid.player ? vid.player.pauseVideo() : null),
@@ -192,15 +204,49 @@
           }
         },
         view: {
-          '/:a/:b': (s,a) => h('main', null, s.videos.map(Video(s)(a))),
-          '*': (s,a) => h('main', null, [
-            Link(a)('/k40HGu_x0bg/1RmJjrxCaCs','CS50 - Lecture 0'),
-            Link(a)('/z-Pt84VIirc/1-cxZluIIQo','CS50 - Lecture 1'),
+          '/:a/:b': (s,a) => h('watch-', null, s.videos.map(Video(s)(a))),
+          '/create': (s,a) => h('create-', null, CreatePair(s)(a)),
+          '/': (s,a) => h('main', null, [
+            h('nav', null, [
+              h('h1', null, 'plural.video'),
+              h('button', {
+                onclick: e => a.router.go('/create')
+              }, 'CREATE'),
+            ]),
+            h('header', null, [
+              h('p', null, 'picture-in-picture interface increasing multi context engagement'),
+            ]),
+            Grid({
+              gutter: '2rem',
+              padding: '3rem',
+              itemFlex: '20rem',
+              children: [
+                Pair(a)('/k40HGu_x0bg/1RmJjrxCaCs','CS50 Lecture 0 - Fall 2016'),
+                Pair(a)('/z-Pt84VIirc/1-cxZluIIQo','CS50 Lecture 1 - Fall 2016'),
+                Pair(a)('/ix1rFgD8TNY/jN-DftnOaDI','CS50 Lecture 2 - Fall 2016'),
+                Pair(a)('/grfy2hFezD0/Ic54nP8CjHo','CS50 Lecture 3 - Fall 2016'),
+              ]
+            }),
+            h('footer'),
           ]),
         },
         plugins: [Router],
       })
     }
+    //
+    // h('svg', {
+    //   fill: "#000000",
+    //   viewBox: "0 0 24 24",
+    //   xmlns: "http://www.w3.org/2000/svg",
+    // }, [
+    //   h('path', {
+    //     d: "M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 1.98 2 1.98h18c1.1 0 2-.88 2-1.98V5c0-1.1-.9-2-2-2zm0 16.01H3V4.98h18v14.03z",
+    //   }),
+    //   h('path', {
+    //     d: "M0 0h24v24H0z",
+    //     fill: "none",
+    //   }),
+    // ]),
 
   </script>
 </html>

@@ -74,8 +74,8 @@ const toggleFocus = e => {
 const CreateYoutubeThumb = a => (id, index) =>
   h('thumb-', {
     style: (id && id.length > 10)
-      ? { backgroundImage: `url(https://img.youtube.com/vi/${ id }/hqdefault.jpg)` }
-      : { border: '.2rem solid #212121' }
+      ? { backgroundImage: `url(https://img.youtube.com/vi/${ id }/maxresdefault.jpg)` }
+      : { borderWidth: '.2rem' }
   }, [
     h('div', {}, h('input', {
       placeholder: 'PASTE YOUTUBE URL',
@@ -185,16 +185,18 @@ function onYouTubeIframeAPIReady() {
       },
     },
     events: {
-      route: (s,a,d) => d.match !== '/:a/:b' ? null :
-        a.setVideos([
-          { id: d.params.a },
-          { id: d.params.b },
-        ]),
+      route: (s,a,d) => {
+        d.match !== '/:a/:b' ? null :
+          a.setVideos([
+            { id: d.params.a },
+            { id: d.params.b },
+          ])
+      },
       update: (s,a,d) => {
         if (d.playState === 1) a.playPlayers()
         if (d.playState === 2) a.pausePlayers()
         if (d.playState === 3) a.syncPlayers(d.currentTime)
-      }
+      },
     },
     view: {
       '/:a/:b': (s,a) => h('watch-', null, s.videos.map(Video(s)(a))),
@@ -214,10 +216,9 @@ function onYouTubeIframeAPIReady() {
           padding: '3rem',
           itemFlex: '15rem',
           children: [
+            Pair(a)('/0epjkvrAaJw/qFiceUAUarQ','Red Bull Rampage 2015: Kurt Sorge'),
+            Pair(a)('/KWg87y_4Eg8/nmkrr-8Lnds','Issues - COMA - Guitar & Drums)'),
             Pair(a)('/k40HGu_x0bg/1RmJjrxCaCs','CS50 Lecture 0 - Fall 2016'),
-            Pair(a)('/z-Pt84VIirc/1-cxZluIIQo','CS50 Lecture 1 - Fall 2016'),
-            Pair(a)('/ix1rFgD8TNY/jN-DftnOaDI','CS50 Lecture 2 - Fall 2016'),
-            Pair(a)('/grfy2hFezD0/Ic54nP8CjHo','CS50 Lecture 3 - Fall 2016'),
           ]
         }),
       ]),

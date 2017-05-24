@@ -2,10 +2,6 @@ html {
   font-size: calc(10px + 2vmin);
 }
 
-body {
-  background: #121212;
-}
-
 script,
 style,
 head {
@@ -25,9 +21,7 @@ nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 3rem 0 2rem;
-  margin: 0 3rem;
-  border-bottom: 2px solid #212121;
+  padding: 2rem 3rem;
   color: #212121;
 }
 
@@ -55,11 +49,15 @@ nav button:hover {
 }
 
 header {
-  height: 62vh;
+  height: 80vmin;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  border-top: 2px solid #212121;
+  border-bottom: 2px solid #212121;
+  margin: 0 3rem;
+
 }
 
 header * {
@@ -82,7 +80,7 @@ header::after {
   border: .2rem solid #212121;
   margin-left: 2rem;
   order: -1;
-  background: #121212;
+  background: #fff;
 }
 
 header h1 {
@@ -183,7 +181,7 @@ pair- thumb-:last-of-type {
   width: 38%;
   bottom: -5%;
   right: 5%;
-  box-shadow: 0 0 1rem rgba(0,0,0,.5);
+  box-shadow: 0 0 1rem rgba(0,0,0,.1);
 }
 
 thumb- {
@@ -193,7 +191,10 @@ thumb- {
   background-position: center;
   background-size: cover;
   transition: transform .2s;
-  background-color: #121212;
+  background-color: #fff;
+  border-style: solid;
+  border-width: 0;
+  border-color: rgba(0,0,0,.1);
 }
 
 thumb- div {

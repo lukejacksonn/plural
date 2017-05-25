@@ -8,6 +8,11 @@ if (redirect && redirect != location.href) {
   history.replaceState(null, null, redirect);
 }
 
+const getParameterByName = name => {
+  var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+  return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
 const mutable = function (e) {
   // Elements initial width and height
   const h = this.offsetHeight;
@@ -103,12 +108,12 @@ const CreatePair = s => a =>
 
 const YoutubeThumb = id =>
   h('thumb-', {
-    style: { backgroundImage: `url(https://img.youtube.com/vi/${ id }/hqdefault.jpg)` },
+    style: { backgroundImage: `url(https://img.youtube.com/vi/${ id }/maxresdefault.jpg)` },
   })
 
-const Pair = a => (url, text) =>
+const Pair = a => (url, offset, text) =>
   h('pair-', {
-    onclick: e => e.preventDefault() || a.router.go(url),
+    onclick: e => e.preventDefault() || a.router.go(url + `?t=${offset}`),
   }, [
     h('title-', null, text),
     YoutubeThumb(url.split('/')[1]),
@@ -123,24 +128,27 @@ const Video = s => a => (vid,index) =>
     onmousedown: mutable,
   }, iframe(s)(a)(vid, index))
 
-const playerVars = {
-  showinfo: 0,
-  rel: 0,
-  html5: 1,
-  playsinline: 1,
-}
-
 const iframe = s => a => (vid,index) =>
   h('iframe-', {
-    id: 'v--' + vid.id,
+    id: 'v--' + vid.id + '--' + index,
     oncreate: e => defer(_ =>
       a.assignPlayer({
         id: vid.id,
         player: new YT.Player(e.id, {
-          playerVars,
+          playerVars: {
+            showinfo: 0,
+            rel: 0,
+            html5: 1,
+            playsinline: 1,
+            iv_load_policy: 3,
+            controls: index === 0 ? 1 : 0,
+          },
           events: {
             onReady: e => {
-              e.target.loadVideoById(vid.id, 0.01)
+              a.setPlayerReady(index)
+              index === 0
+              ? e.target.loadVideoById(vid.id, 0.01)
+              : e.target.loadVideoById(vid.id, s.timeOffset)
               index === 0 ? null : e.target.mute()
             },
             onStateChange: e => a.setPlayState({
@@ -158,6 +166,7 @@ function onYouTubeIframeAPIReady() {
     state: {
       playState: -1,
       currentTime: 0,
+      timeOffset: 0,
       videos: [],
       create: {
         primary: null,
@@ -169,11 +178,15 @@ function onYouTubeIframeAPIReady() {
         setPrimary: (s,a,d) => ({ create: Object.assign({}, s.create, { primary: d }) }),
         setSecondary: (s,a,d) => ({ create: Object.assign({}, s.create, { secondary: d }) }),
       },
+      setPlayerReady: (s,a,d) => R.assocPath(['videos',d,'ready'], true, s),
+      setTimeOffset: (s,a,d) => ({ timeOffset: parseFloat(d) || 0 }),
       setVideos: (s,a,d) => ({ videos: d }),
       setPlayState: (s,a, { playState, currentTime }) => ({ playState, currentTime }),
-      pausePlayers: s => s.videos.forEach(vid => vid.player ? vid.player.pauseVideo() : null),
-      playPlayers: s => s.videos.forEach(vid => vid.player ? vid.player.playVideo() : null),
-      syncPlayers: (s,a,d) => s.videos.forEach(vid => vid.player && vid.player.seekTo ? vid.player.seekTo(d) : null),
+      pausePlayers: s => s.videos.forEach(vid => vid.ready ? vid.player.pauseVideo() : null),
+      playPlayers: s => s.videos.forEach(vid => vid.ready ? vid.player.playVideo() : null),
+      syncPlayers: (s,a,d) => {
+        s.videos[1].player.seekTo(s.videos[0].player.getCurrentTime() + s.timeOffset)
+      },
       assignPlayer: (s,a,d) => {
         const vid = s.videos.find(x => x.id === d.id)
         return ({ videos: s.videos
@@ -186,16 +199,21 @@ function onYouTubeIframeAPIReady() {
     },
     events: {
       route: (s,a,d) => {
-        d.match !== '/:a/:b' ? null :
-          a.setVideos([
-            { id: d.params.a },
-            { id: d.params.b },
-          ])
+        d.match !== '/:a/:b'
+          ? a.setVideos([])
+          : a.setTimeOffset(getParameterByName('t')) ||
+            a.setVideos([
+              { id: d.params.a },
+              { id: d.params.b },
+            ])
       },
       update: (s,a,d) => {
         if (d.playState === 1) a.playPlayers()
         if (d.playState === 2) a.pausePlayers()
-        if (d.playState === 3) a.syncPlayers(d.currentTime)
+        if(s.videos.length === 2 && s.videos[0].ready && s.videos[1].ready) {
+          const timeDiff = Math.abs(s.videos[0].player.getCurrentTime() - s.videos[1].player.getCurrentTime())
+          if((Math.abs(Math.abs(s.timeOffset) - timeDiff)) > 0.1) a.syncPlayers()
+        }
       },
     },
     view: {
@@ -216,9 +234,10 @@ function onYouTubeIframeAPIReady() {
           padding: '3rem',
           itemFlex: '15rem',
           children: [
-            Pair(a)('/0epjkvrAaJw/qFiceUAUarQ','Red Bull Rampage 2015: Kurt Sorge'),
-            Pair(a)('/KWg87y_4Eg8/nmkrr-8Lnds','Issues - COMA - Guitar & Drums)'),
-            Pair(a)('/k40HGu_x0bg/1RmJjrxCaCs','CS50 Lecture 0 - Fall 2016'),
+            Pair(a)('/0epjkvrAaJw/qFiceUAUarQ', 0.5, 'Red Bull Rampage 2015: Kurt Sorge'),
+            Pair(a)('/nmkrr-8Lnds/KWg87y_4Eg8', 2.3, 'Issues - COMA - Guitar & Drums)'),
+            Pair(a)('/WA4iX5D9Z64/gcMn_Eu-XTE', -3, 'Taylor Swift - Never Getting Back Together'),
+            Pair(a)('/k40HGu_x0bg/1RmJjrxCaCs', 0, 'CS50 Lecture 0 - Fall 2016'),
           ]
         }),
       ]),

@@ -108,16 +108,16 @@ const CreatePair = s => a =>
 
 const YoutubeThumb = id =>
   h('thumb-', {
-    style: { backgroundImage: `url(https://img.youtube.com/vi/${ id }/maxresdefault.jpg)` },
+    style: { backgroundImage: `url(https://img.youtube.com/vi/${ id }/hqdefault.jpg)` },
   })
 
-const Pair = a => (url, offset, text) =>
+const Pair = a => (url, text) =>
   h('pair-', {
-    onclick: e => e.preventDefault() || a.router.go(url + `?t=${offset}`),
+    onclick: e => e.preventDefault() || a.router.go(url),
   }, [
     h('title-', null, text),
-    YoutubeThumb(url.split('/')[1]),
-    YoutubeThumb(url.split('/')[2]),
+    YoutubeThumb(url.split('?')[0].split('/')[1]),
+    YoutubeThumb(url.split('?')[0].split('/')[2]),
   ]
 )
 
@@ -234,10 +234,17 @@ function onYouTubeIframeAPIReady() {
           padding: '3rem',
           itemFlex: '15rem',
           children: [
-            Pair(a)('/0epjkvrAaJw/qFiceUAUarQ', 0.5, 'Red Bull Rampage 2015: Kurt Sorge'),
-            Pair(a)('/nmkrr-8Lnds/KWg87y_4Eg8', 2.3, 'Issues - COMA - Guitar & Drums)'),
-            Pair(a)('/WA4iX5D9Z64/gcMn_Eu-XTE', -3, 'Taylor Swift - Never Getting Back Together'),
-            Pair(a)('/k40HGu_x0bg/1RmJjrxCaCs', 0, 'CS50 Lecture 0 - Fall 2016'),
+            // Pair(a)('/0epjkvrAaJw/qFiceUAUarQ', 0.5, 'Red Bull Rampage 2015: Kurt Sorge'),
+            // Pair(a)('/o9cPWOdq-J4/AWggPLXeOkU', -4.7, 'Aaron Kitcher - BMTH - Play For Pragues'),
+            // Pair(a)('/9BxoCArA6io/raB504ga-oY?t=11.4', 'Issues - The Realest'),
+            // Pair(a)('/k40HGu_x0bg/1RmJjrxCaCs?t=0', 'CS50 Lecture 0 - Fall 2016'),
+            // Pair(a)('/nmkrr-8Lnds/KWg87y_4Eg8?t=2.3', 'Issues - COMA - Guitar & Drum Cover'),
+            // Pair(a)('/VbxZqLJwV3g/7BXNWFcVTcs?t=-0.2', 'Periphery - Alpha - Guitar & Drum Cover'),
+            // Pair(a)('/jmLj33UQkik/fRNkQH4DVg8?t=0.6', 'The Chainsmokers - Paris - Drum & Video'),
+            Pair(a)('/8ELbX5CMomE/fRh_vgS2dFE?t=0', 'Justin Bieber - Sorry'),
+            Pair(a)('/uAVUl0cAKpo/A9u7ScKKl0E?t=0', 'Sabrina Carpenter - Thumbs'),
+            Pair(a)('/WA4iX5D9Z64/gcMn_Eu-XTE?t=-3', 'Taylor Swift - Never Getting Back Together'),
+            Pair(a)('/JGwWNGJdvx8/_dK2tDK9grQ?t=-5.9', 'Ed Sheeran - Shape of You'),
           ]
         }),
       ]),
